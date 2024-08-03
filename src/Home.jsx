@@ -61,7 +61,14 @@ const Home = () => {
     const formData = new FormData();
     formData.append('name', values.name);
     formData.append('text', values.text);
-    formData.append('images', image)
+    
+    if (values.images && values.images.length > 0) {
+      values.images.forEach((image) => {
+        if (image && image.originFileObj) {
+          formData.append('images', image.originFileObj, image.name)
+        }
+      })
+    }
   
   axios({
     url:'https://autoapi.dezinfeksiyatashkent.uz/api/cities',
