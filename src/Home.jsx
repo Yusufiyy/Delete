@@ -9,6 +9,7 @@ const Home = () => {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [image, setImage] = useState(null)
+  const [currentcity, setCurrentcity] = useState(null)
   const mytoken = localStorage.getItem('token')
   const navigate = useNavigate()
   const getCities = () =>{
@@ -22,8 +23,9 @@ const Home = () => {
     }
     getCities()
   },[])
-  const showModal = () =>{
+  const showModal = (item) =>{
     setOpen(true)
+    setCurrentcity(item)
   }
   const closeModal = () =>{
     setOpen(false)
@@ -52,7 +54,7 @@ const Home = () => {
       name: item.name,
       text: item.text,
       images: (<img width={200} src={`https://autoapi.dezinfeksiyatashkent.uz/api/uploads/images/${item.image_src}`}/> ),
-      button: (<><Button type='primary'>Edit</Button> <Button type='primary' danger onClick={()=>deleteCities(item.id)}>Delete</Button></>)
+      button: (<><Button type='primary' onClick={()=>showModal(item)}>Edit</Button> <Button type='primary' danger onClick={()=>deleteCities(item.id)}>Delete</Button></>)
     }
   ))
   
@@ -71,8 +73,8 @@ const Home = () => {
     }
   
   axios({
-    url:'https://autoapi.dezinfeksiyatashkent.uz/api/cities',
-    method:'POST',
+    url: currentcity?`https://autoapi.dezinfeksiyatashkent.uz/api/cities/${currentcity.id}`:`https://autoapi.dezinfeksiyatashkent.uz/api/cities`,
+    method:currentcity?'PUT':'POST',
     headers:{
       Authorization: `Bearer ${mytoken}`
     },
@@ -80,7 +82,7 @@ const Home = () => {
   })
   .then(res=>{
     if(res?.data?.success){
-      message.success("added a new word")
+      currentcity?message.success("O'zgartirildi"):message.success("Qo'shildi ")
       setOpen(false)
       getCities()
     }
@@ -123,10 +125,10 @@ const normFile = (e) => {
 }
   return (
     <div>
-      <Button type='primary' onClick={showModal}>Add</Button>
+      <Button type='primary' onClick={()=>setOpen(true)}>Add</Button>
       <Table columns={columns} dataSource={ysf}/>
       <Modal open={open} onCancel={closeModal} footer={null}>
-        <Form onFinish={createPost}>
+        <Form onFinish={createPost} initialValues={currentcity || {}}>
           <Form.Item label='Name' name='name'>
             <Input placeholder='Name' style={{width: '90%'}}/>
           </Form.Item>
@@ -135,7 +137,10 @@ const normFile = (e) => {
           </Form.Item>
           <Form.Item label="Upload Image" name="images" valuePropName="fileList" getValueFromEvent={normFile} rules={[{ required: true, message: 'Please upload an image' }]}>
             <Upload
-              customRequest={({ onSuccess }) => {onSuccess("ok")}}beforeUpload={beforeUpload} listType="picture-card">
+              customRequest={({ onSuccess }) => { onSuccess("ok"); }}
+              beforeUpload={beforeUpload}
+              listType="picture-card"
+              > 
               <div>
                 <PlusOutlined />
                 <div style={{ marginTop: 8 }}>Upload</div>
